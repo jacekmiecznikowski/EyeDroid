@@ -103,10 +103,13 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
             }
         }
         require(!next.torch || camera?.cameraInfo?.hasFlashUnit() == true) { "Ta kamera nie ma lampy" }
-        val torchFuture = camera?.cameraControl?.enableTorch(next.torch)
+        val torchFuture = if (old == null || old.front != next.front || old.torch != next.torch) {
+            if (next.torch || camera?.cameraInfo?.torchState?.value == androidx.camera.core.TorchState.ON)
+                camera?.cameraControl?.enableTorch(next.torch) else null
+        } else null
         torchFuture?.addListener({
             try { torchFuture.get() } catch (e: Exception) {
-                if (!closed) StreamState.fail("Nie udało się zmienić lampy: ${e.cause?.message ?: e.message}")
+                if (!closed && next.torch) StreamState.fail("Nie udało się zmienić lampy: ${e.cause?.message ?: e.message}")
             }
         }, ContextCompat.getMainExecutor(context))
         config = next
