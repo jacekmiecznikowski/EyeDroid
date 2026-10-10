@@ -65,7 +65,7 @@ class ProBilling(private val app: Application) : PurchasesUpdatedListener {
         val params = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(listOf(BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(product)
-                .setOfferToken(offer.offerToken).build())).build()
+                .setOfferToken(offer.offerToken ?: "").build())).build()
         client.launchBillingFlow(activity, params)
     }
 
