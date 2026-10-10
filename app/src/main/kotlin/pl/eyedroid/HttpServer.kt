@@ -42,7 +42,7 @@ class HttpServer(context: Context, private val host: String, private val port: I
                 val c = StreamState.config.value
                 call.response.header(HttpHeaders.CacheControl, "no-store")
                 call.respondText(JSONObject().put("running", s.running).put("fps", s.fps)
-                    .put("size", s.frameSize).put("encodeMs", s.encodeMs).put("connections", s.clients).put("audio", c.audio)
+                    .put("size", s.frameSize).put("encodeMs", s.encodeMs).put("jpegKb", s.jpegKb).put("connections", s.clients).put("audio", c.audio)
                     .put("front", c.front).put("torch", c.torch).put("quality", c.quality)
                     .put("fpsLimit", c.fps).put("error", s.error ?: JSONObject.NULL).toString(), ContentType.Application.Json)
             }
