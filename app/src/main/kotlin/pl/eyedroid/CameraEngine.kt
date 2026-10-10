@@ -92,7 +92,7 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
                                 else "${image.cropRect.height()} × ${image.cropRect.width()}"
                             if (time - window >= 1000) {
                                 val fps = (count * 1000L / (time - window)).toInt()
-                                StreamState.session.update { it.copy(fps = fps, frameSize = size, encodeMs = if (count > 0) (encodeTotalNs / count / 1_000_000L).toInt() else 0) }
+                                StreamState.session.update { it.copy(fps = fps, frameSize = size, jpegKb = frame.size / 1024, encodeMs = if (count > 0) (encodeTotalNs / count / 1_000_000L).toInt() else 0) }
                                 count = 0; encodeTotalNs = 0L; window = time
                             }
                         }
