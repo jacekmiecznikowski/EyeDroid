@@ -5,9 +5,13 @@ import kotlinx.coroutines.*
 
 /** Small local preferences only. No recordings, session keys, accounts or analytics are persisted. */
 class EyeDroidApp : Application() {
+    lateinit var billing: ProBilling
+        private set
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     override fun onCreate() {
         super.onCreate()
+        billing = ProBilling(this)
+        billing.connect()
         val preferences = getSharedPreferences("studio", MODE_PRIVATE)
         StreamState.config.value = runCatching {
             StreamConfig(width = preferences.getInt("width", 1280), height = preferences.getInt("height", 720),
