@@ -44,7 +44,7 @@ class HttpServer(context: Context, private val host: String, private val port: I
                 call.respondText(JSONObject().put("running", s.running).put("fps", s.fps)
                     .put("size", s.frameSize).put("encodeMs", s.encodeMs).put("jpegKb", s.jpegKb).put("connections", s.clients).put("audio", c.audio)
                     .put("front", c.front).put("torch", c.torch).put("quality", c.quality)
-                    .put("fpsLimit", c.fps).put("error", s.error ?: JSONObject.NULL).toString(), ContentType.Application.Json)
+                    .put("fpsLimit", c.fps).put("pro", StreamState.pro.value).put("error", s.error ?: JSONObject.NULL).toString(), ContentType.Application.Json)
             }
             // Query-only POST: never reads an unbounded request body. State-changing GET is forbidden.
             post("/api/config") {
@@ -55,6 +55,9 @@ class HttpServer(context: Context, private val host: String, private val port: I
                     require(q.names().all { q.getAll(it)?.size == 1 })
                     fun int(name: String, old: Int) = q[name]?.let { requireNotNull(it.toIntOrNull()) } ?: old
                     fun bool(name: String, old: Boolean) = q[name]?.let { requireNotNull(it.toBooleanStrictOrNull()) } ?: old
+                    if (!StreamState.pro.value && (int("height", StreamState.config.value.height) > 480 || int("width", StreamState.config.value.width) > 640)) {
+                        call.respond(HttpStatusCode.Forbidden); return@post
+                    }
                     StreamState.config.update { old ->
                         old.copy(width = int("width", old.width), height = int("height", old.height),
                             fps = int("fps", old.fps), quality = int("quality", old.quality),
