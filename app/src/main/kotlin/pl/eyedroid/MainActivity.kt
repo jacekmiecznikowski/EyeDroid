@@ -127,7 +127,7 @@ private fun Dashboard() {
                     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
                         PreviewPanel(session, config)
                         ConnectionPanel(session, showKey, { showKey = !showKey }, ::copy)
-                        SettingsPanel(config, busy, session.hasTorch)
+                        SettingsPanel(config, busy, session.hasTorch, pro)
                     }
                 }
             }
