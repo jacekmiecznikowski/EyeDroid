@@ -206,7 +206,7 @@ private fun ConnectionPanel(session: SessionState, reveal: Boolean, toggle: () -
                 Text(session.url.ifBlank { "http://—:4747" }, fontFamily = FontFamily.Monospace, color = Lime, fontSize = 16.sp)
                 if (session.running) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { copy("${session.url}/#${session.token}") }) { Text("Kopiuj link") }
+                        OutlinedButton(onClick = { copy("${session.url}/#${session.token}") }) { Text("Kopiuj link · auto start") }
                         OutlinedButton(onClick = { copy("${session.url}/video.mjpg?token=${session.token}") }) { Text("Link VLC") }
                     }
                     TextButton(onClick = toggle, contentPadding = PaddingValues(0.dp)) {
