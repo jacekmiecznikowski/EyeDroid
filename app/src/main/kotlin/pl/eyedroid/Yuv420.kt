@@ -11,8 +11,20 @@ object Yuv420 {
         require(listOf(left, top, width, height).all { it % 2 == 0 })
         val out = ByteArray(width * height * 3 / 2)
         fun sample(p: Plane, x: Int, y: Int) = p.buffer.get(p.buffer.position() + y * p.rowStride + x * p.pixelStride)
-        for (y in 0 until height) for (x in 0 until width) {
-            out[y * width + x] = sample(planes[0], left + x, top + y)
+        // Luma is usually tightly packed (pixelStride == 1), so copy each
+        // cropped row in one bulk operation instead of 2 million byte reads at 1080p.
+        val yPlane = planes[0]
+        if (yPlane.pixelStride == 1) {
+            val source = yPlane.buffer.duplicate()
+            val base = source.position()
+            for (y in 0 until height) {
+                source.position(base + (top + y) * yPlane.rowStride + left)
+                source.get(out, y * width, width)
+            }
+        } else {
+            for (y in 0 until height) for (x in 0 until width) {
+                out[y * width + x] = sample(yPlane, left + x, top + y)
+            }
         }
         var i = width * height
         for (y in 0 until height / 2) for (x in 0 until width / 2) {
