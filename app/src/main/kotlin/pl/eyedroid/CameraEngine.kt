@@ -75,9 +75,11 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
                 try {
                     val settings = config
                     val now = SystemClock.elapsedRealtimeNanos()
-                    if (now - last >= 1_000_000_000L / settings.fps && !closed && epoch == generation.get()) {
+                    // Camera frame timestamps jitter around nominal 30 Hz. Allow 2 ms slack
+                    // so a frame at e.g. 33.0 ms is not skipped until 66 ms.
+                    if ((last == 0L || now - last >= 1_000_000_000L / settings.fps - 2_000_000L) && !closed && epoch == generation.get()) {
                         val interval = 1_000_000_000L / settings.fps
-                        last = if (last == 0L) now else (last + interval).coerceAtLeast(now - interval)
+                        last = now
                         val frame = jpeg(image, settings.quality)
                         if (!closed && epoch == generation.get()) {
                             StreamState.frames.value = JpegFrame(frame, now)
