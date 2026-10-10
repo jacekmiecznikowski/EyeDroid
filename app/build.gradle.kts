@@ -35,5 +35,6 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:3.6.0")
     implementation("io.ktor:ktor-server-websockets:3.6.0")
     implementation("org.slf4j:slf4j-nop:2.0.17")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     testImplementation("junit:junit:4.13.2")
 }
