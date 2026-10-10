@@ -35,6 +35,7 @@ data class JpegFrame(val bytes: ByteArray, val timestampNs: Long)
 /** Process-local media bus, never retains an Activity or an ImageProxy. */
 object StreamState {
     val config = MutableStateFlow(StreamConfig())
+    val pro = MutableStateFlow(false)
     val session = MutableStateFlow(SessionState())
     val frames = MutableStateFlow<JpegFrame?>(null)
     // PCM: signed 16-bit LE, mono, 48 kHz, one message per ~20 ms. No replay.
