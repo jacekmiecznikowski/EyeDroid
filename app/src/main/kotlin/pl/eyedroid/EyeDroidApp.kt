@@ -14,7 +14,7 @@ class EyeDroidApp : Application() {
         billing.connect()
         val preferences = getSharedPreferences("studio", MODE_PRIVATE)
         StreamState.config.value = runCatching {
-            StreamConfig(width = preferences.getInt("width", 1280), height = preferences.getInt("height", 720),
+            StreamConfig(width = preferences.getInt("width", 640), height = preferences.getInt("height", 480),
                 fps = preferences.getInt("fps", 30), quality = preferences.getInt("quality", 75),
                 front = preferences.getBoolean("front", false), audio = preferences.getBoolean("audio", true),
                 port = preferences.getInt("port", 4747)).validated()
