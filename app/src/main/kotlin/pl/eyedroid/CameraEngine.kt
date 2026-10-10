@@ -1,12 +1,6 @@
 package pl.eyedroid
 
 import android.content.Context
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
-import android.util.Range
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.camera2.interop.Camera2Interop
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
@@ -59,24 +53,7 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
             val p = checkNotNull(provider)
             val selector = if (next.front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
             require(p.hasCamera(selector)) { "Wybrana kamera jest niedostępna" }
-            val builder = ImageAnalysis.Builder()
-            // Select an AE FPS range supported by this lens. A capture-rate cap alone
-            // does not ask the camera sensor to deliver 30 frames each second.
-            val cameraInfo = selector.filter(p.availableCameraInfos).first()
-            val cameraId = Camera2CameraInfo.from(cameraInfo).cameraId
-            val characteristics = context.getSystemService(CameraManager::class.java)
-                .getCameraCharacteristics(cameraId)
-            val supported = characteristics.get(
-                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES
-            )?.toList().orEmpty()
-            val selected = supported.filter { it.lower <= next.fps && it.upper >= next.fps }
-                .minWithOrNull(compareBy<Range<Int>>({ it.upper - it.lower }, { it.upper }))
-            if (selected != null) {
-                Camera2Interop.Extender(builder).setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, selected
-                )
-            }
-            val useCase = builder
+            val useCase = ImageAnalysis.Builder()
                 .setTargetRotation(Surface.ROTATION_0)
                 .setResolutionSelector(ResolutionSelector.Builder().setResolutionStrategy(
                     ResolutionStrategy(Size(next.width, next.height), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER)
