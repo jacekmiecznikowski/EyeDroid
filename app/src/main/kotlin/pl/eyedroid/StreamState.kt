@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.update
 
 /** Immutable configurations; all external input is checked before application. */
 data class StreamConfig(
-    val width: Int = 1280, val height: Int = 720, val fps: Int = 30,
+    val width: Int = 640, val height: Int = 480, val fps: Int = 30,
     val quality: Int = 75, val front: Boolean = false, val torch: Boolean = false,
     val audio: Boolean = true, val port: Int = 4747,
 ) {
