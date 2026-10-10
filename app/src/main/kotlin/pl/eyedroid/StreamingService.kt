@@ -32,7 +32,9 @@ class StreamingService : LifecycleService() {
         if (cleanupJob?.isCompleted == false) { stopSelf(); return START_NOT_STICKY }
         started = true
         try {
-            val c = StreamState.config.value.validated()
+            val selected = StreamState.config.value.validated()
+            val c = if (!StreamState.pro.value && selected.height > 480) selected.copy(width = 640, height = 480) else selected
+            if (c != selected) StreamState.config.value = c
             val required = buildList {
                 add(Manifest.permission.CAMERA)
                 if (c.audio) add(Manifest.permission.RECORD_AUDIO)
@@ -79,8 +81,10 @@ class StreamingService : LifecycleService() {
                     StreamState.config.collect { next ->
                         if (next != applied) try {
                             require(next.audio == c.audio && next.port == c.port) { "Zmień mikrofon/port przed uruchomieniem" }
-                            camera!!.configure(next)
-                            applied = next
+                            val permitted = if (!StreamState.pro.value && next.height > 480) next.copy(width = 640, height = 480) else next
+                            camera!!.configure(permitted)
+                            applied = permitted
+                            if (next != permitted) StreamState.config.compareAndSet(next, permitted)
                         } catch (e: Exception) {
                             if (e is CancellationException) throw e
                             StreamState.fail("Ustawienia: ${e.message}")
