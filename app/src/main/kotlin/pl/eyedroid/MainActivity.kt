@@ -179,7 +179,7 @@ private fun PreviewPanel(session: SessionState, config: StreamConfig) {
                 .background(Base.copy(alpha = .7f), RoundedCornerShape(8.dp)).padding(8.dp), fontSize = 9.sp, letterSpacing = 1.sp)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Metric("${session.fps}", "FPS RZECZYWISTE", Modifier.weight(1f))
+            Metric("${session.fps}", "FPS / JPEG ${session.encodeMs}ms", Modifier.weight(1f))
             Metric(session.frameSize, "ROZMIAR KLATKI", Modifier.weight(1f))
             Metric("${session.clients}", "POŁĄCZENIA", Modifier.weight(1f))
         }
