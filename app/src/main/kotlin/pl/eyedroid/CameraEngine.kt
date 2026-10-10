@@ -1,6 +1,12 @@
 package pl.eyedroid
 
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
+import android.util.Range
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import androidx.camera.camera2.interop.Camera2Interop
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
@@ -49,11 +55,28 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
         check(!closed)
         next.validated()
         val old = applied
-        if (old == null || next.width != old.width || next.height != old.height || next.front != old.front) {
+        if (old == null || next.width != old.width || next.height != old.height || next.front != old.front || next.fps != old.fps) {
             val p = checkNotNull(provider)
             val selector = if (next.front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
             require(p.hasCamera(selector)) { "Wybrana kamera jest niedostępna" }
-            val useCase = ImageAnalysis.Builder()
+            val builder = ImageAnalysis.Builder()
+            // Select an AE FPS range supported by this lens. A capture-rate cap alone
+            // does not ask the camera sensor to deliver 30 frames each second.
+            val cameraInfo = selector.filter(p.availableCameraInfos).first()
+            val cameraId = Camera2CameraInfo.from(cameraInfo).cameraId
+            val characteristics = context.getSystemService(CameraManager::class.java)
+                .getCameraCharacteristics(cameraId)
+            val supported = characteristics.get(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES
+            )?.toList().orEmpty()
+            val selected = supported.filter { it.lower <= next.fps && it.upper >= next.fps }
+                .minWithOrNull(compareBy<Range<Int>>({ it.upper - it.lower }, { it.upper }))
+            if (selected != null) {
+                Camera2Interop.Extender(builder).setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, selected
+                )
+            }
+            val useCase = builder
                 .setTargetRotation(Surface.ROTATION_0)
                 .setResolutionSelector(ResolutionSelector.Builder().setResolutionStrategy(
                     ResolutionStrategy(Size(next.width, next.height), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER)
@@ -70,6 +93,7 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
             StreamState.session.update { it.copy(hasTorch = hasTorch) }
             var last = 0L
             var count = 0
+            var encodeTotalNs = 0L
             var window = SystemClock.elapsedRealtime()
             useCase.setAnalyzer(executor) { image ->
                 try {
@@ -78,9 +102,10 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
                     // Camera frame timestamps jitter around nominal 30 Hz. Allow 2 ms slack
                     // so a frame at e.g. 33.0 ms is not skipped until 66 ms.
                     if ((last == 0L || now - last >= 1_000_000_000L / settings.fps - 2_000_000L) && !closed && epoch == generation.get()) {
-                        val interval = 1_000_000_000L / settings.fps
                         last = now
+                        val encodeStart = SystemClock.elapsedRealtimeNanos()
                         val frame = jpeg(image, settings.quality)
+                        encodeTotalNs += SystemClock.elapsedRealtimeNanos() - encodeStart
                         if (!closed && epoch == generation.get()) {
                             StreamState.frames.value = JpegFrame(frame, now)
                             count++
@@ -90,8 +115,8 @@ class CameraEngine(private val context: Context, private val owner: LifecycleOwn
                                 else "${image.cropRect.height()} × ${image.cropRect.width()}"
                             if (time - window >= 1000) {
                                 val fps = (count * 1000L / (time - window)).toInt()
-                                StreamState.session.update { it.copy(fps = fps, frameSize = size) }
-                                count = 0; window = time
+                                StreamState.session.update { it.copy(fps = fps, frameSize = size, encodeMs = if (count > 0) (encodeTotalNs / count / 1_000_000L).toInt() else 0) }
+                                count = 0; encodeTotalNs = 0L; window = time
                             }
                         }
                     }
