@@ -50,6 +50,7 @@ class ProBilling(private val app: Application) : PurchasesUpdatedListener {
                 val valid = purchases.filter { it.products.contains("eyedroid_pro") &&
                     it.purchaseState == Purchase.PurchaseState.PURCHASED }
                 entitled.value = valid.isNotEmpty()
+                StreamState.pro.value = entitled.value
                 valid.forEach { acknowledge(it) }
             }
         }
