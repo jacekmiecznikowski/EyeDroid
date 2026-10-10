@@ -52,6 +52,10 @@ private val Muted = Color(0xFF8D9CAB)
 private val Line = Color(0xFF253340)
 
 class MainActivity : ComponentActivity() {
+    override fun onResume() {
+        super.onResume()
+        (applicationContext as EyeDroidApp).billing.refresh()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
