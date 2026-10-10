@@ -27,7 +27,7 @@ data class StreamConfig(
 data class SessionState(
     val running: Boolean = false, val starting: Boolean = false,
     val url: String = "", val token: String = "", val clients: Int = 0,
-    val fps: Int = 0, val frameSize: String = "—", val hasTorch: Boolean = false,
+    val fps: Int = 0, val encodeMs: Int = 0, val frameSize: String = "—", val hasTorch: Boolean = false,
     val error: String? = null,
 )
 data class JpegFrame(val bytes: ByteArray, val timestampNs: Long)
